@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎬 Viral Shorts Generator</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --accent: #ff3c5e;
+      --accent2: #7b2ff7;
+      --text: #f0f0f0;
+      --muted: #888;
+      --border: #333;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    header h1 { font-size: 2rem; }
+    header p  { color: var(--muted); margin-top: 6px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 780px;
+      margin: 0 auto 24px;
+    }
+
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .9rem; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    input:focus { outline: none; border-color: var(--accent); }
+
+    button#generate-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    button#generate-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    #status { text-align: center; margin-top: 12px; color: var(--muted); min-height: 20px; }
+    #error-box {
+      display: none;
+      background: #3a0a0a;
+      border: 1px solid #7a1a1a;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      color: #ff8080;
+    }
+
+    /* ---- Results ---- */
+    #results { max-width: 780px; margin: 0 auto; }
+
+    .meta-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .meta-card .meta-title { font-size: 1.1rem; font-weight: 700; flex: 1; min-width: 200px; }
+    .meta-badge {
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+
+    .short-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .short-header {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .short-header .ts { font-size: .85rem; opacity: .85; }
+    .short-body { padding: 0; }
+
+    .section {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+    .section:last-child { border-bottom: none; }
+    .section-label {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .section-content { font-size: .93rem; line-height: 1.55; }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .tag {
+      background: var(--surface2);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .caption-row {
+      display: flex;
+      gap: 10px;
+      padding: 4px 0;
+      font-size: .88rem;
+    }
+    .caption-ts { color: var(--accent2); min-width: 50px; font-variant-numeric: tabular-nums; }
+
+    .overlay-badge {
+      display: inline-block;
+      background: var(--accent2);
+      color: #fff;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: .82rem;
+      margin: 3px 4px 3px 0;
+    }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .kv-row { display: flex; gap: 8px; font-size: .88rem; margin-bottom: 4px; }
+    .kv-key { color: var(--muted); min-width: 130px; flex-shrink: 0; }
+
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+    .tab-btn {
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .88rem;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      transition: color .2s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; padding: 14px 20px; }
+    .tab-panel.active { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎬 Viral Shorts Generator</h1>
+    <p>Turn any YouTube video into ready-to-publish short-form content</p>
+  </header>
+
+  <div class="card">
+    <label for="yt-url">YouTube Video URL</label>
+    <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." />
+
+    <label for="api-key">OpenAI API Key <span style="color:var(--muted);font-weight:400">(leave blank if set server-side)</span></label>
+    <input type="password" id="api-key" placeholder="sk-..." />
+
+    <button id="generate-btn">⚡ Generate Viral Shorts</button>
+    <div id="status"></div>
+    <div id="error-box"></div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const btn = document.getElementById('generate-btn');
+    const statusEl = document.getElementById('status');
+    const errorBox = document.getElementById('error-box');
+    const resultsEl = document.getElementById('results');
+
+    btn.addEventListener('click', async () => {
+      const url = document.getElementById('yt-url').value.trim();
+      const apiKey = document.getElementById('api-key').value.trim();
+
+      if (!url) { showError('Please enter a YouTube URL.'); return; }
+
+      setLoading(true);
+      errorBox.style.display = 'none';
+      resultsEl.innerHTML = '';
+
+      try {
+        const res = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, api_key: apiKey }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Unknown error'); return; }
+        renderResults(data);
+      } catch (e) {
+        showError('Network error: ' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function setLoading(on) {
+      btn.disabled = on;
+      statusEl.innerHTML = on
+        ? '<span class="spinner"></span>Analyzing video &amp; generating content…'
+        : '';
+    }
+
+    function showError(msg) {
+      errorBox.textContent = '⚠ ' + msg;
+      errorBox.style.display = 'block';
+    }
+
+    function esc(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderResults({ metadata, shorts }) {
+      let html = '';
+
+      // Metadata banner
+      if (metadata && metadata.title) {
+        html += `<div class="meta-card">
+          <div class="meta-title">🎥 ${esc(metadata.title)}</div>
+          <span class="meta-badge">⏱ ${esc(metadata.duration ? mmss(metadata.duration) : 'N/A')}</span>
+          <span class="meta-badge">📺 ${esc(metadata.channel || 'Unknown')}</span>
+          <span class="meta-badge">👁 ${metadata.view_count ? Number(metadata.view_count).toLocaleString() + ' views' : 'N/A'}</span>
+        </div>`;
+      }
+
+      if (!shorts || shorts.length === 0) {
+        html += '<div class="card" style="text-align:center;color:var(--muted)">No shorts generated.</div>';
+        resultsEl.innerHTML = html;
+        return;
+      }
+
+      shorts.forEach((s, i) => {
+        html += renderShort(s, i);
+      });
+
+      resultsEl.innerHTML = html;
+
+      // Activate tab listeners
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const group = btn.dataset.group;
+          document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+          document.querySelectorAll(`.tab-panel[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelector(`.tab-panel[data-tab="${btn.dataset.tab}"][data-group="${group}"]`).classList.add('active');
+        });
+      });
+    }
+
+    function renderShort(s, i) {
+      const idx = s.short_number || (i + 1);
+      const ts = s.timestamp_start && s.timestamp_end
+        ? `${esc(s.timestamp_start)} → ${esc(s.timestamp_end)}`
+        : '';
+
+      let html = `<div class="short-card">
+        <div class="short-header">
+          <span>✂️ SHORT ${idx}: ${esc(s.title)}</span>
+          ${ts ? `<span class="ts">⏱ ${ts}</span>` : ''}
+        </div>
+        <div class="short-body">`;
+
+      // Hook
+      if (s.hook) {
+        html += section('🪝 Hook (First 3 sec)', `<em>"${esc(s.hook)}"</em>`);
+      }
+
+      // Script
+      if (s.script) {
+        html += section('📝 Script', `<div style="white-space:pre-wrap">${esc(s.script)}</div>`);
+      }
+
+      // Captions
+      if (s.captions && s.captions.length) {
+        let cap = '<div>';
+        s.captions.forEach(c => {
+          cap += `<div class="caption-row"><span class="caption-ts">${esc(c.start)}–${esc(c.end)}</span><span>${esc(c.text)}</span></div>`;
+        });
+        cap += '</div>';
+        html += section('💬 Captions', cap);
+      }
+
+      // Thumbnail
+      if (s.thumbnail) {
+        const t = s.thumbnail;
+        html += section('🖼 Thumbnail', `
+          <div class="kv-row"><span class="kv-key">Text:</span><strong>${esc(t.text)}</strong></div>
+          <div class="kv-row"><span class="kv-key">Background:</span>${esc(t.background)}</div>
+          <div class="kv-row"><span class="kv-key">Emotion:</span>${esc(t.emotion)}</div>
+          <div class="kv-row"><span class="kv-key">Face Expression:</span>${esc(t.face_expression)}</div>
+          <div class="kv-row"><span class="kv-key">Color Psychology:</span>${esc(t.color_psychology)}</div>
+        `);
+      }
+
+      // On-screen text
+      if (s.on_screen_text && s.on_screen_text.length) {
+        const badges = s.on_screen_text.map(t => `<span class="overlay-badge">${esc(t)}</span>`).join('');
+        html += section('🔤 On-Screen Text Overlays', badges);
+      }
+
+      // Editing guide
+      if (s.editing_guide) {
+        const e = s.editing_guide;
+        html += section('🎞 Editing Guide (CapCut / InVideo)', `
+          <div class="kv-row"><span class="kv-key">Zoom Effects:</span>${esc(e.zoom_effects)}</div>
+          <div class="kv-row"><span class="kv-key">Jump Cuts:</span>${esc(e.jump_cuts)}</div>
+          <div class="kv-row"><span class="kv-key">Captions Style:</span>${esc(e.captions_style)}</div>
+          <div class="kv-row"><span class="kv-key">Sound Effects:</span>${esc(e.sound_effects)}</div>
+          <div class="kv-row"><span class="kv-key">Background Music:</span>${esc(e.background_music)}</div>
+        `);
+      }
+
+      // Social media pack – tabbed
+      if (s.social_media_pack) {
+        const p = s.social_media_pack;
+        const g = `short-${i}-social`;
+        html += `<div class="section">
+          <div class="section-label">📦 Social Media Pack</div>
+          <div class="tabs">
+            <button class="tab-btn active" data-group="${g}" data-tab="${g}-yt">YouTube Shorts</button>
+            <button class="tab-btn" data-group="${g}" data-tab="${g}-ig">Instagram</button>
+            <button class="tab-btn" data-group="${g}" data-tab="${g}-tt">TikTok</button>
+          </div>`;
+
+        // YouTube Shorts tab
+        const yt = p.youtube_shorts || {};
+        html += `<div class="tab-panel active" data-group="${g}" data-tab="${g}-yt">
+          <div class="kv-row"><span class="kv-key">Title:</span>${esc(yt.title)}</div>
+          <div class="kv-row"><span class="kv-key">Description:</span><span style="white-space:pre-wrap">${esc(yt.description)}</span></div>
+          <div class="tag-list">${(yt.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        </div>`;
+
+        // Instagram tab
+        const ig = p.instagram_reels || {};
+        html += `<div class="tab-panel" data-group="${g}" data-tab="${g}-ig">
+          <div class="kv-row"><span class="kv-key">Caption:</span><span style="white-space:pre-wrap">${esc(ig.caption)}</span></div>
+          <div class="tag-list">${(ig.hashtags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        </div>`;
+
+        // TikTok tab
+        const tt = p.tiktok || {};
+        html += `<div class="tab-panel" data-group="${g}" data-tab="${g}-tt">
+          <div class="kv-row"><span class="kv-key">Caption:</span><span style="white-space:pre-wrap">${esc(tt.caption)}</span></div>
+          <div class="tag-list">${(tt.trending_hashtags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        </div>`;
+
+        html += '</div>'; // close .section
+      }
+
+      // Optimization notes
+      if (s.optimization_notes) {
+        html += section('📈 Optimization Notes', esc(s.optimization_notes));
+      }
+
+      html += '</div></div>'; // close .short-body, .short-card
+      return html;
+    }
+
+    function section(label, content) {
+      return `<div class="section">
+        <div class="section-label">${label}</div>
+        <div class="section-content">${content}</div>
+      </div>`;
+    }
+
+    function mmss(secs) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+  </script>
+</body>
+</html>
