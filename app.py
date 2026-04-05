@@ -1,6 +1,7 @@
 """
 Flask web application – YouTube Viral Shorts Generator.
 """
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -13,6 +14,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+
+logger = logging.getLogger(__name__)
 
 
 @app.route("/")
@@ -43,7 +46,9 @@ def generate():
     try:
         segments = fetch_transcript(video_id)
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 422
+        logger.warning("Transcript fetch failed for %s: %s", video_id, exc)
+        return jsonify({"error": "Could not retrieve transcript for this video. "
+                        "Ensure the video has captions enabled."}), 422
 
     # 3. Fetch metadata (best-effort)
     metadata = get_video_metadata(video_id)
@@ -52,10 +57,12 @@ def generate():
     try:
         shorts = generate_shorts(segments, metadata, api_key)
     except Exception as exc:
-        return jsonify({"error": f"Content generation failed: {exc}"}), 500
+        logger.error("Content generation failed: %s", exc, exc_info=True)
+        return jsonify({"error": "Content generation failed. Please try again."}), 500
 
     return jsonify({"metadata": metadata, "shorts": shorts})
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug, port=5000)

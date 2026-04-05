@@ -67,7 +67,7 @@ Return ONLY a valid JSON array of these objects — no markdown fences, no extra
 
 def generate_shorts(transcript_segments: list[dict], metadata: dict, api_key: str) -> list[dict]:
     """
-    Call OpenAI to analyse the transcript and generate viral short ideas.
+    Call OpenAI to analyze the transcript and generate viral short ideas.
 
     Args:
         transcript_segments: list of {text, start, duration} dicts
