@@ -1,0 +1,44 @@
+[project]
+name = "friday-tony-stark-demo"
+version = "0.1.0"
+description = "FRIDAY — Tony Stark-style voice agent powered by LiveKit, Sarvam STT, Gemini, and OpenAI TTS"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # MCP server framework
+    "fastmcp>=2.0.0",
+    # MCP client (used by the agent to call the server)
+    "mcp>=1.0.0",
+    # LiveKit voice-agent runtime
+    "livekit-agents>=0.11.0",
+    "livekit-plugins-openai>=0.7.0",
+    "livekit-plugins-google>=0.7.0",
+    "livekit-plugins-silero>=0.7.0",
+    "livekit-plugins-deepgram>=0.7.0",
+    # Sarvam STT/TTS (Indian-English optimised)
+    "livekit-plugins-sarvam>=0.1.0",
+    # HTTP client used by MCP tools
+    "httpx>=0.27.0",
+    # HTML / XML / RSS parsing
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    # System utilities
+    "psutil>=6.0.0",
+    # Environment variables
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+# uv run friday      → starts the FastMCP SSE server on :8000
+friday       = "server:main"
+# uv run friday_voice → starts the LiveKit voice agent in dev mode
+friday_voice = "agent_friday:dev"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["friday"]
+# Also include the top-level entry-point scripts
+include = ["server.py", "agent_friday.py"]
